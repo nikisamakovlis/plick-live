@@ -466,6 +466,35 @@ body {
   justify-items: center;
 }
 
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: var(--night);
+  width: 100%;
+}
+
+.tab {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.55rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-muted);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--yellow);
+  color: var(--night);
+}
+
+.tab:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+
 .qr__code {
   width: min(100%, 15rem);
   aspect-ratio: 1;
@@ -602,8 +631,11 @@ body {
     </div>
   </section>
 
-  <section class="qr" aria-label="Get the plick app">
-    <p class="chat__head">Scan to get the app</p>
+  <section class="qr" aria-label="QR codes">
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-app" type="button" role="tab" aria-selected="true" data-mode="app">Get the app</button>
+      <button class="tab" id="tab-card" type="button" role="tab" aria-selected="false" data-mode="card">Share this card</button>
+    </div>
     <div class="qr__code" id="qr" role="img" aria-label="QR code"></div>
     <p class="qr__hint" id="qr-hint">Scan with your phone camera to download plick on iPhone or Android.</p>
   </section>
@@ -615,13 +647,21 @@ body {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
-  const APP_URL = "https://plick.se/appstore";
-  function renderQr() {
+  const QR_MODES = {
+    app: { url: "https://plick.se/appstore", hint: "Scan with your phone camera to download plick on iPhone or Android." },
+    card: { url: "https://nikisamakovlis.github.io/plick-live/niki/", hint: "Scan with your phone camera to open this card." }
+  };
+
+  function renderQr(mode) {
     const qr = qrcode(0, "M");
-    qr.addData(APP_URL);
+    qr.addData(QR_MODES[mode].url);
     qr.make();
     document.getElementById("qr").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+    document.getElementById("qr-hint").textContent = QR_MODES[mode].hint;
+    document.querySelectorAll(".tab").forEach(tab => tab.setAttribute("aria-selected", tab.dataset.mode === mode));
   }
+
+  document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", () => renderQr(tab.dataset.mode)));
 
   const toast = document.getElementById("toast");
   function showToast(text) {
@@ -645,7 +685,7 @@ body {
     });
   });
 
-  if (window.qrcode) renderQr();
+  if (window.qrcode) renderQr("app");
 
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     const clip = document.getElementById("clip");
